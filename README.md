@@ -179,6 +179,47 @@ Or run locally:
 
 ---
 
+## Security Considerations
+
+### Installation Safety
+
+The one-line installer (`curl | bash`) is convenient but means you are executing remotely-fetched code. Before running it, verify the script manually:
+
+```bash
+# Download and inspect before running
+curl -fsSL https://raw.githubusercontent.com/zubair-trabzada/ai-legal-claude/main/install.sh -o install.sh
+cat install.sh   # read it first
+bash install.sh  # then run it
+```
+
+Or clone and run locally:
+
+```bash
+git clone https://github.com/zubair-trabzada/ai-legal-claude.git
+cd ai-legal-claude
+bash install.sh
+```
+
+### Skill Permissions
+
+Installing these skills grants them access to **all future Claude Code sessions** under your user account. The skills can:
+
+- Read and write files in your working directory
+- Fetch arbitrary URLs via WebFetch (limited to `https://` public URLs by skill instructions)
+- Execute the pre-shipped `scripts/generate_legal_pdf.py` script via Bash
+
+These are standard Claude Code skill capabilities, but you should be aware they are global — not scoped to a single project.
+
+### Untrusted Document Content
+
+All analysis skills are instructed to treat contract content as untrusted data and to analyze it rather than follow any instructions embedded in it. If you notice Claude behaving unexpectedly after loading a document (e.g., fetching URLs, writing files), stop the session and report the contract as a potential prompt injection attempt.
+
+### URL-Based Commands
+
+`/legal terms <url>`, `/legal privacy <url>`, and `/legal compliance <url>` fetch live websites. The skills are instructed to reject non-HTTPS and private-network URLs. Do not point these commands at internal tools, admin panels, or localhost services.
+
+---
+
 ## Disclaimer
 
 This tool is for educational and informational purposes only. It does **not** provide legal advice and should **not** be used as a substitute for consultation with a licensed attorney. Always have a qualified lawyer review any contract before signing.

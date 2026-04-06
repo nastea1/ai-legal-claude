@@ -5,6 +5,31 @@
 # ============================================================================
 set -e
 
+# ---------------------------------------------------------------------------
+# --verify flag: print SHA-256 checksums of all files to be installed
+# ---------------------------------------------------------------------------
+if [ "${1:-}" = "--verify" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    echo "SHA-256 checksums for ai-legal-claude installation files:"
+    echo "Compare these against the published release checksums before installing."
+    echo ""
+    if command -v sha256sum &>/dev/null; then
+        SHASUM="sha256sum"
+    elif command -v shasum &>/dev/null; then
+        SHASUM="shasum -a 256"
+    else
+        echo "Error: sha256sum or shasum not found. Cannot verify checksums."
+        exit 1
+    fi
+    find "$SCRIPT_DIR" -not -path '*/.git/*' -type f | sort | while read -r f; do
+        $SHASUM "$f"
+    done
+    echo ""
+    echo "To verify: compare the above output against checksums published at"
+    echo "https://github.com/zubair-trabzada/ai-legal-claude/releases"
+    exit 0
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'

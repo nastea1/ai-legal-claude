@@ -8,6 +8,7 @@ import sys
 import os
 import json
 import math
+import pathlib
 from datetime import datetime
 
 try:
@@ -427,6 +428,17 @@ def build_pdf(data, output_path):
 
 
 # ---------------------------------------------------------------------------
+# Path safety
+# ---------------------------------------------------------------------------
+def _safe_path(path_str):
+    """Resolve a path, rejecting directory traversal sequences."""
+    p = pathlib.Path(path_str)
+    if ".." in p.parts:
+        raise ValueError(f"Path traversal rejected: {path_str!r}")
+    return p.resolve()
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -436,11 +448,25 @@ if __name__ == "__main__":
         print("  output_path: Optional output PDF path (default: CONTRACT-REVIEW-REPORT.pdf)")
         sys.exit(1)
 
-    json_path = sys.argv[1]
-    output_path = sys.argv[2] if len(sys.argv) > 2 else "CONTRACT-REVIEW-REPORT.pdf"
+    try:
+        json_path = _safe_path(sys.argv[1])
+        output_path = (
+            _safe_path(sys.argv[2]) if len(sys.argv) > 2
+            else pathlib.Path("CONTRACT-REVIEW-REPORT.pdf").resolve()
+        )
+    except ValueError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
 
-    with open(json_path, "r") as f:
-        data = json.load(f)
+    try:
+        with open(json_path, "r") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        print(f"ERROR: Input file not found: {json_path}", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"ERROR: Invalid JSON in {json_path}: {e}", file=sys.stderr)
+        sys.exit(1)
 
-    result = build_pdf(data, output_path)
+    result = build_pdf(data, str(output_path))
     print(f"PDF generated: {result}")
